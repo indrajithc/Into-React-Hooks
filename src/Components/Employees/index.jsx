@@ -1,50 +1,141 @@
-import React, { useSate } from 'react'; 
+import React, { useState, useEffect } from 'react'; 
  
 import Table from 'react-bootstrap-table-next'; 
 import paginationFactory from 'react-bootstrap-table2-paginator';
 
 
+import api from '../../services/api';
+
 import './index.sass';
 
 
-const Employee = () => {
+import New from './new';
+import Update from './update';
+
+
+const Employee = props => {
+
+	const [ newEmployee, toggleNewEmployee] = useState( false );
+	const [ updateEmployee, toggleUpdateEmployee] = useState( false );
+
+	const [ employees, setEmployees] = useState( [] );
+	const [ employee, updatedMe] = useState( {} );
+
 
 
 
 	const columns = [{
-	  dataField: 'id',
-	  text: 'Product ID',
+	  dataField: 'no',
+	  text: '#',
+	  sort: true
+	}, {
+	  dataField: 'code',
+	  text: 'Employee Code',
 	  sort: true
 	}, {
 	  dataField: 'name',
-	  text: 'Product Name',
+	  text: 'Employee Name',
 	  sort: true
 	}, {
-	  dataField: 'price',
-	  text: 'Product Price',
+	  dataField: 'department',
+	  text: 'Department',
 	  sort: true
-	}];
+	} ];
 
 	const defaultSorted = [{
-	  dataField: 'name',
-	  order: 'desc'
+	  dataField: 'no',
+	  order: 'asc'
 	}];
 
 
-const products = [
-	{
-		id: 1,
-		name : "b",
-		price : "c"
-	},
 
-	{
-		id: 2,
-		name : "b",
-		price : "c"
+
+	const handleOnSelect = (row, isSelect) => {
+		console.log(row, isSelect);
+
+		updatedMe(row );
+
+		toggleUpdateEmployeeFunc( true );
 	}
-]
+ 
 
+
+const getEmployess = async( data ) => {
+ try {
+
+ 	const Employees = await api.call('get',"employee");
+ 	
+ 	setEmployees( Employees.map( (each, index) => ({ id: each._id, no: (index + 1), name : each.name, code: each.code, department: each.department})));	           
+ 		 
+ } catch( err ) {
+ 	alert("something went wrong. Try again.");
+ }
+}
+
+
+const getEmployeeDetails = () => {
+
+	getEmployess();
+}
+
+
+
+useEffect( e => {
+	getEmployeeDetails();
+}, [ newEmployee , updateEmployee ]);
+ 
+
+
+ 
+ 
+
+
+const toggleUpdateEmployeeFunc =  status => {
+
+console.log(status);
+	if( status ) {
+		toggleUpdateEmployee(true);
+		document.getElementsByTagName('body')[0].style.overflow = 'hidden';
+	} else {
+		toggleUpdateEmployee(false);
+		document.getElementsByTagName('body')[0].style.overflow = 'unset';
+
+		setSelectRow( {
+	  mode: 'radio', 
+  selectColumnPosition: 'right',
+  clickToSelect: true,
+  hideSelectAll: true, 
+  selected: [],
+      onSelect: handleOnSelect 
+
+});
+
+
+	}
+}
+
+const toggleNewEmployeeFunc = status => {
+
+console.log(status);
+	if( status ) {
+		toggleNewEmployee(true);
+		document.getElementsByTagName('body')[0].style.overflow = 'hidden';
+	} else {
+		toggleNewEmployee(false);
+		document.getElementsByTagName('body')[0].style.overflow = 'unset';
+	}
+}
+
+
+	const [ selectRow, setSelectRow] = useState( {
+	  mode: 'radio', 
+  selectColumnPosition: 'right',
+  clickToSelect: true,
+  hideSelectAll: true, 
+  selected: false,
+      onSelect: handleOnSelect 
+
+});
 
 
 	return (
@@ -65,7 +156,7 @@ const products = [
 			    <div className="col-4 text-right">
 
 			        <div className="btn-group">
-			          <button type="button" className="btn btn-secondary text-uppercase h6"  >
+			          <button onClick={ e => toggleNewEmployeeFunc( true ) } type="button" className="btn btn-secondary text-uppercase h6"  >
 			            <i className="ti-user"></i> new employee
 			          </button>
 			          
@@ -87,11 +178,12 @@ const products = [
 			     
 <Table
   bootstrap4
-  keyField="id"
-  data={ products }
+  keyField="no"
+  data={ employees }
   columns={ columns }
   defaultSorted={ defaultSorted } 
    pagination={ paginationFactory() } 
+  selectRow={ selectRow }
 />
 
 
@@ -99,28 +191,17 @@ const products = [
 			  </div>
 			</div>
 
+{
 
-			<div class="modal-backdrop fade show"></div>	
-			<div class="modal fade show d-block" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-			  <div class="modal-dialog" role="document">
-			    <div class="modal-content">
-			      <div class="modal-header">
-			        <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
-			        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-			          <span aria-hidden="true">&times;</span>
-			        </button>
-			      </div>
-			      <div class="modal-body">
-			        ...
-			      </div>
-			      <div class="modal-footer">
-			        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-			        <button type="button" class="btn btn-primary">Save changes</button>
-			      </div>
-			    </div>
-			  </div>
-			</div>
+	newEmployee && <New  closeFuction= {toggleNewEmployeeFunc} />
 
+
+}
+
+
+{
+	updateEmployee &&  <Update  closeFuction= {toggleUpdateEmployeeFunc} employee = { employee } />
+}
 
 
 			</>
